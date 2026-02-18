@@ -1,36 +1,38 @@
 {
   "name": "synapse",
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "precodegen": "pnpm generate:constants && pnpm generate:schema && pnpm generate:yaml",
     "codegen": "graph codegen",
-    "generate:constants": "node ./scripts/generate-constants.js",
-    "generate:constants:calibration": "node ./scripts/generate-constants.js calibration",
-    "generate:constants:mainnet": "node ./scripts/generate-constants.js mainnet",
-    "generate:yaml": "node ./scripts/generate-config.js --yaml",
-    "generate:yaml:calibration": "node ./scripts/generate-config.js calibration --yaml",
-    "generate:yaml:mainnet": "node ./scripts/generate-config.js mainnet --yaml",
-    "generate:schema": "cp ./schemas/schema.${VERSION:-v1}.graphql schema.graphql",
+    "generate:constants": "tsx ./scripts/generate-constants.ts",
+    "generate:yaml": "tsx ./scripts/generate-config.ts --yaml",
+    "generate:schema": "cp ./schemas/schema.reliability.graphql schema.graphql",
     "prebuild": "pnpm codegen",
     "build": "graph build",
     "build:calibration": "NETWORK=calibration pnpm run build",
     "build:mainnet": "NETWORK=mainnet pnpm run build",
-    "deploy": "goldsky subgraph deploy synapse/1.0.0 --path ./",
-    "deploy:calibration": "pnpm run build:calibration && pnpm run deploy",
-    "deploy:mainnet": "pnpm run build:mainnet && pnpm run deploy",
-    "create-local": "graph create --node http://localhost:8020/ synapse",
-    "remove-local": "graph remove --node http://localhost:8020/ synapse",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 synapse",
+    "deploy": "goldsky subgraph deploy fwss-reliability/1.0.0 --path ./",
+    "deploy:calibration": "pnpm run build:calibration && goldsky subgraph deploy fwss-reliability-calibration/1.0.0 --path ./",
+    "deploy:mainnet": "pnpm run build:mainnet && goldsky subgraph deploy fwss-reliability-mainnet/1.0.0 --path ./",
+    "create-local": "graph create --node http://localhost:8020/ fwss-reliability",
+    "remove-local": "graph remove --node http://localhost:8020/ fwss-reliability",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fwss-reliability",
     "deploy-local:calibration": "pnpm run build:calibration && pnpm run deploy-local",
     "deploy-local:mainnet": "pnpm run build:mainnet && pnpm run deploy-local",
     "test": "graph test"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.97.0",
+    "@filoz/synapse-core": "^0.2.0",
+    "@graphprotocol/graph-cli": "0.98.1",
     "@graphprotocol/graph-ts": "0.37.0"
   },
   "devDependencies": {
+    "@types/mustache": "^4.2.5",
+    "@types/node": "^22.0.0",
     "matchstick-as": "0.6.0",
-    "mustache": "^4.2.0"
+    "mustache": "^4.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
   }
 }

@@ -6,6 +6,13 @@ generated/
 node_modules/
 jspm_packages/
 
+pnpm-lock.yaml
+
+yarn.lock
+package-lock.json
+bun.lockb
+bun.lock
+
 # Logs
 logs
 *.log
@@ -36,3 +43,4 @@ cache
 # Generated schema and subgraph.yaml
 schema.graphql
 subgraph.yaml
+abi/

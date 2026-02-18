@@ -1,0 +1,111 @@
+# Provider Reliability Schema
+
+enum ProviderStatus {
+  REGISTERED
+  APPROVED
+  UNAPPROVED
+  REMOVED
+}
+
+enum DataSetStatus {
+  ACTIVE
+  DELETED
+  TERMINATED
+}
+
+"""Aggregated provider metrics. Per-dataset drill-down via dataSets field."""
+type Provider @entity(immutable: false) {
+  id: Bytes!
+  providerId: BigInt!
+  serviceProvider: Bytes!
+  payee: Bytes!
+  name: String!
+  description: String!
+  status: ProviderStatus!
+  dataSets: [DataSet!]! @derivedFrom(field: "provider")
+  pdpOffering: PDPOffering
+
+  # Lifecycle
+  registeredAt: BigInt
+  approvedAt: BigInt
+  removedAt: BigInt
+  createdAt: BigInt!
+  lastActiveAt: BigInt!
+
+  # Datasets
+  datasetsCreated: BigInt!
+  datasetsDeleted: BigInt!
+  activeDatasets: BigInt!
+  totalBytesStored: BigInt!
+
+  # Pieces
+  piecesStored: BigInt!
+  piecesDeleted: BigInt!
+  activePieces: BigInt!
+
+  # Proving periods
+  provenPeriods: BigInt!
+  faultedPeriods: BigInt!
+
+  # Statistics
+  avgDataSetSize: BigDecimal!
+  avgPiecesPerDataset: BigDecimal!
+  provingReliability: BigDecimal!
+
+  # Recent window (rolling 7 days)
+  recentProvenPeriods: BigInt!
+  recentFaultedPeriods: BigInt!
+  recentPiecesAdded: BigInt!
+  recentPiecesDeleted: BigInt!
+  recentDatasetsCreated: BigInt!
+  recentDatasetsDeleted: BigInt!
+  windowStartBlock: BigInt!
+  windowStartTime: BigInt!
+  recentProvingReliability: BigDecimal!
+}
+
+"""Per-dataset metrics. Caches provider address for PDP handler lookups."""
+type DataSet @entity(immutable: false) {
+  id: ID!
+  provider: Provider!
+  providerId: BigInt!
+  status: DataSetStatus!
+
+  # Lifecycle
+  createdAt: BigInt!
+  createdBlock: BigInt!
+  lastActiveAt: BigInt!
+
+  # Metadata
+  metadataKeys: [String!]!
+  metadataValues: [String!]!
+
+  # Pieces
+  piecesAdded: BigInt!
+  piecesRemoved: BigInt!
+  activePieces: BigInt!
+  sizeInBytes: BigInt!
+
+  # Proving periods
+  provenPeriods: BigInt!
+  faultedPeriods: BigInt!
+  provingReliability: BigDecimal!
+}
+
+type PDPOffering @entity(immutable: false) {
+  id: ID!
+  productType: BigInt!
+  serviceURL: String
+  minPieceSize: BigInt
+  maxPieceSize: BigInt
+  pricePerTibDay: BigInt
+  minProvingPeriod: BigInt
+  location: String
+  paymentToken: Bytes
+  ipniPiece: Boolean!
+  ipniIpfs: Boolean!
+  ipniPeerId: Bytes
+  serviceStatus: String
+  capacityTib: String
+  isActive: Boolean!
+}

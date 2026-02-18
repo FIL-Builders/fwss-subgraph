@@ -1,0 +1,103 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  # ServiceProviderRegistry - Provider lifecycle
+  - kind: ethereum
+    name: ServiceProviderRegistry
+    network: {{name}}
+    source:
+      address: "{{ServiceProviderRegistry.address}}"
+      abi: ServiceProviderRegistry
+      startBlock: {{ServiceProviderRegistry.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Provider
+      abis:
+        - name: ServiceProviderRegistry
+          file: ./abi/ServiceProviderRegistry.abi.json
+      eventHandlers:
+        - event: "ProviderRegistered(indexed uint256,indexed address,indexed address)"
+          handler: handleProviderRegistered
+        - event: "ProviderInfoUpdated(indexed uint256)"
+          handler: handleProviderInfoUpdated
+        - event: "ProviderRemoved(indexed uint256)"
+          handler: handleProviderRemoved
+        - event: "ProductAdded(indexed uint256,indexed uint8,address,string[],bytes[])"
+          handler: handleProductAdded
+        - event: "ProductUpdated(indexed uint256,indexed uint8,address,string[],bytes[])"
+          handler: handleProductUpdated
+        - event: "ProductRemoved(indexed uint256,indexed uint8)"
+          handler: handleProductRemoved
+      file: ./src/service-provider-registry.ts
+
+  # FilecoinWarmStorageService - Dataset lifecycle and approvals
+  - kind: ethereum
+    name: FilecoinWarmStorageService
+    network: {{name}}
+    source:
+      address: "{{FilecoinWarmStorageService.address}}"
+      abi: FilecoinWarmStorageService
+      startBlock: {{FilecoinWarmStorageService.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Provider
+        - DataSet
+      abis:
+        - name: FilecoinWarmStorageService
+          file: ./abi/FilecoinWarmStorageService.abi.json
+        - name: PDPVerifier
+          file: ./abi/PDPVerifier.abi.json
+        - name: ServiceProviderRegistry
+          file: ./abi/ServiceProviderRegistry.abi.json
+      eventHandlers:
+        - event: "DataSetCreated(indexed uint256,indexed uint256,uint256,uint256,uint256,address,address,address,string[],string[])"
+          handler: handleDataSetCreated
+        - event: "ProviderApproved(indexed uint256)"
+          handler: handleProviderApproved
+        - event: "ProviderUnapproved(indexed uint256)"
+          handler: handleProviderUnapproved
+        - event: "FaultRecord(indexed uint256,uint256,uint256)"
+          handler: handleFaultRecord
+        - event: "ServiceTerminated(indexed address,indexed uint256,uint256,uint256,uint256)"
+          handler: handleServiceTerminated
+      file: ./src/filecoin-warm-storage-service.ts
+
+  # PDPVerifier - Proof events
+  - kind: ethereum
+    name: PDPVerifier
+    network: {{name}}
+    source:
+      address: "{{PDPVerifier.address}}"
+      abi: PDPVerifier
+      startBlock: {{PDPVerifier.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Provider
+        - DataSet
+      abis:
+        - name: PDPVerifier
+          file: ./abi/PDPVerifier.abi.json
+      eventHandlers:
+        - event: "PossessionProven(indexed uint256,(uint256,uint256)[])"
+          handler: handlePossessionProven
+        - event: "PiecesAdded(indexed uint256,uint256[],(bytes)[])"
+          handler: handlePiecesAdded
+        - event: "PiecesRemoved(indexed uint256,uint256[])"
+          handler: handlePiecesRemoved
+        - event: "DataSetDeleted(indexed uint256,uint256)"
+          handler: handleDataSetDeleted
+        - event: "NextProvingPeriod(indexed uint256,uint256,uint256)"
+          handler: handleNextProvingPeriod
+      file: ./src/pdp-verifier.ts

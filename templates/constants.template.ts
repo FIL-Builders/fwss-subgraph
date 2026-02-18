@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated from config/network.json for network: {{network}}
+// Generated from service_contracts/deployments.json for network: {{network}}
 // Last generated: {{timestamp}}
 
 import { Address, Bytes } from "@graphprotocol/graph-ts";
@@ -18,3 +18,8 @@ export class ContractAddresses {
     Bytes.fromHexString("{{USDFCToken.address}}"),
   );
 }
+
+// PDP Configuration (read from fwssView contract at build time)
+export const MAX_PROVING_PERIOD: i32 = {{pdpConfig.maxProvingPeriod}};
+export const CHALLENGE_WINDOW_SIZE: i32 = {{pdpConfig.challengeWindowSize}};
+export const CHALLENGES_PER_PROOF: i32 = {{pdpConfig.challengesPerProof}};

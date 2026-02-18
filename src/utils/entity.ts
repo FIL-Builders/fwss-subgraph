@@ -1,60 +1,10 @@
-import { Bytes, BigInt, Address, log } from "@graphprotocol/graph-ts";
-import { Provider, ProviderProduct, Rail, DataSet, Piece } from "../../generated/schema";
+import { BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
+import { Provider, DataSet, PDPOffering } from "../../generated/schema";
+import { ProviderStatus, DataSetStatus } from "./types";
+import { BIGINT_ZERO, BIGDECIMAL_ZERO, BIGDECIMAL_ONE, PDP_PRODUCT_TYPE } from "./constants";
 import { ProductAdded as ProductAddedEvent } from "../../generated/ServiceProviderRegistry/ServiceProviderRegistry";
-import { BIGINT_ZERO, BIGINT_ONE, ContractAddresses, LeafSize } from "./constants";
-import { ProviderStatus } from "./types";
-import { getProviderProductEntityId, getPieceEntityId, getDataSetEntityId } from "./keys";
-import { validateCommPv2, unpaddedSize } from "./cid";
 
-export function createRails(
-  railIds: BigInt[],
-  type: string[],
-  from: Address,
-  to: Address,
-  listenerAddr: Address,
-  dataSetId: Bytes,
-): void {
-  for (let i = 0; i < type.length; i++) {
-    if (railIds[i].isZero()) {
-      continue;
-    }
-
-    let rail = new Rail(Bytes.fromByteArray(Bytes.fromBigInt(railIds[i])));
-    rail.railId = railIds[i];
-    rail.token = ContractAddresses.USDFCToken;
-    rail.type = type[i];
-    rail.from = from;
-    rail.to = to;
-    rail.operator = listenerAddr;
-    rail.arbiter = listenerAddr;
-    rail.dataSet = dataSetId;
-    rail.paymentRate = BIGINT_ZERO;
-    rail.endEpoch = BIGINT_ZERO;
-    rail.isActive = true;
-    rail.queueLength = BIGINT_ZERO;
-    rail.save();
-  }
-}
-
-export function createProviderProduct(event: ProductAddedEvent): void {
-  const productType = event.params.productType;
-  const serviceProvider = event.params.serviceProvider;
-  const capabilityKeys = event.params.capabilityKeys;
-  const capabilityValues = event.params.capabilityValues;
-
-  const productId = getProviderProductEntityId(serviceProvider, productType);
-  const providerProduct = new ProviderProduct(productId);
-
-  providerProduct.provider = serviceProvider;
-  providerProduct.productType = BigInt.fromI32(productType);
-  providerProduct.capabilityKeys = capabilityKeys;
-  providerProduct.capabilityValues = capabilityValues;
-  providerProduct.isActive = true;
-
-  providerProduct.save();
-}
-
-export function initiateProvider(
+export function createProvider(
   providerId: BigInt,
   serviceProvider: Address,
   payee: Address,
@@ -68,84 +18,135 @@ export function initiateProvider(
   provider.name = "";
   provider.description = "";
   provider.status = ProviderStatus.REGISTERED;
-  provider.isActive = true;
-
-  provider.totalFaultedPeriods = BIGINT_ZERO;
-  provider.totalFaultedPieces = BIGINT_ZERO;
-  provider.totalDataSets = BIGINT_ZERO;
-  provider.totalPieces = BIGINT_ZERO;
-  provider.totalDataSize = BIGINT_ZERO;
-  provider.totalProducts = BIGINT_ZERO;
-
+  provider.registeredAt = blockNumber;
   provider.createdAt = timestamp;
-  provider.updatedAt = timestamp;
-  provider.blockNumber = blockNumber;
+  provider.lastActiveAt = timestamp;
+  provider.datasetsCreated = BIGINT_ZERO;
+  provider.datasetsDeleted = BIGINT_ZERO;
+  provider.activeDatasets = BIGINT_ZERO;
+  provider.totalBytesStored = BIGINT_ZERO;
+  provider.piecesStored = BIGINT_ZERO;
+  provider.piecesDeleted = BIGINT_ZERO;
+  provider.activePieces = BIGINT_ZERO;
+  provider.provenPeriods = BIGINT_ZERO;
+  provider.faultedPeriods = BIGINT_ZERO;
+  provider.avgDataSetSize = BIGDECIMAL_ZERO;
+  provider.avgPiecesPerDataset = BIGDECIMAL_ZERO;
+  provider.provingReliability = BIGDECIMAL_ONE;
+  provider.recentProvenPeriods = BIGINT_ZERO;
+  provider.recentFaultedPeriods = BIGINT_ZERO;
+  provider.recentPiecesAdded = BIGINT_ZERO;
+  provider.recentPiecesDeleted = BIGINT_ZERO;
+  provider.recentDatasetsCreated = BIGINT_ZERO;
+  provider.recentDatasetsDeleted = BIGINT_ZERO;
+  provider.windowStartBlock = blockNumber;
+  provider.windowStartTime = timestamp;
+  provider.recentProvingReliability = BIGDECIMAL_ONE;
 
   return provider;
 }
 
-/**
- * Common logic for handling PieceAdded events.
- * Creates a new piece and updates related entities.
- */
-export function handlePieceAddedCommon(
-  setId: BigInt,
-  pieceId: BigInt,
+export function createDataset(
+  dataSetId: BigInt,
+  provider: Provider,
+  providerId: BigInt,
   metadataKeys: string[],
   metadataValues: string[],
-  pieceBytes: Bytes,
-  blockTimestamp: BigInt,
+  timestamp: BigInt,
   blockNumber: BigInt,
-): void {
-  const commPData = validateCommPv2(pieceBytes);
-  const rawSize = commPData.isValid ? unpaddedSize(commPData.padding, commPData.height) : BigInt.zero();
+): DataSet {
+  const dataSet = new DataSet(dataSetId.toString());
+  dataSet.provider = provider.id;
+  dataSet.providerId = providerId;
+  dataSet.status = DataSetStatus.ACTIVE;
+  dataSet.createdAt = timestamp;
+  dataSet.createdBlock = blockNumber;
+  dataSet.lastActiveAt = timestamp;
+  dataSet.metadataKeys = metadataKeys;
+  dataSet.metadataValues = metadataValues;
+  dataSet.piecesAdded = BIGINT_ZERO;
+  dataSet.piecesRemoved = BIGINT_ZERO;
+  dataSet.activePieces = BIGINT_ZERO;
+  dataSet.sizeInBytes = BIGINT_ZERO;
+  dataSet.provenPeriods = BIGINT_ZERO;
+  dataSet.faultedPeriods = BIGINT_ZERO;
+  dataSet.provingReliability = BIGDECIMAL_ONE;
 
-  const pieceEntityId = getPieceEntityId(setId, pieceId);
-  const piece = new Piece(pieceEntityId);
-  piece.pieceId = pieceId;
-  piece.setId = setId;
-  piece.rawSize = rawSize;
-  piece.leafCount = rawSize.div(BigInt.fromI32(LeafSize));
-  piece.cid = pieceBytes.length > 0 ? pieceBytes : Bytes.empty();
-  piece.metadataKeys = metadataKeys;
-  piece.metadataValues = metadataValues;
-  piece.removed = false;
-  piece.lastProvenEpoch = BIGINT_ZERO;
-  piece.lastProvenAt = BIGINT_ZERO;
-  piece.lastFaultedEpoch = BIGINT_ZERO;
-  piece.lastFaultedAt = BIGINT_ZERO;
-  piece.totalProofsSubmitted = BIGINT_ZERO;
-  piece.totalPeriodsFaulted = BIGINT_ZERO;
-  piece.createdAt = blockTimestamp;
-  piece.updatedAt = blockTimestamp;
-  piece.blockNumber = blockNumber;
-  piece.dataSet = getDataSetEntityId(setId);
+  return dataSet;
+}
 
-  piece.save();
-
-  const dataSet = DataSet.load(getDataSetEntityId(setId));
-  if (!dataSet) {
-    log.warning("handlePieceAdded: DataSet not found for setId: {}", [setId.toString()]);
-    return;
+/** Converts big-endian raw bytes to BigInt (graph-ts expects little-endian). */
+function bytesToBigInt(value: Bytes): BigInt {
+  if (value.length == 0) return BigInt.zero();
+  let len = value.length;
+  let reversed = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    reversed[i] = value[len - 1 - i];
   }
+  return BigInt.fromUnsignedBytes(changetype<Bytes>(reversed));
+}
 
-  dataSet.totalPieces = dataSet.totalPieces.plus(BIGINT_ONE);
-  dataSet.nextPieceId = dataSet.nextPieceId.plus(BIGINT_ONE);
-  dataSet.totalDataSize = dataSet.totalDataSize.plus(piece.rawSize);
-  dataSet.leafCount = dataSet.leafCount.plus(piece.rawSize.div(BigInt.fromI32(LeafSize)));
-  dataSet.updatedAt = blockTimestamp;
-  dataSet.blockNumber = blockNumber;
-  dataSet.save();
-
-  const provider = Provider.load(dataSet.serviceProvider);
-  if (!provider) {
-    log.warning("handlePieceAdded: Provider not found for DataSet: {}", [dataSet.id.toString()]);
-    return;
+function bytesToBoolean(value: Bytes): boolean {
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] != 0) return true;
   }
+  return false;
+}
 
-  provider.totalDataSize = provider.totalDataSize.plus(piece.rawSize);
-  provider.totalPieces = provider.totalPieces.plus(BIGINT_ONE);
-  provider.updatedAt = blockTimestamp;
-  provider.blockNumber = blockNumber;
-  provider.save();
+/** Maps on-chain capability key/value pairs to typed PDPOffering fields. */
+export function decodeCapabilities(offering: PDPOffering, keys: string[], values: Bytes[]): void {
+  for (let i = 0; i < keys.length; i++) {
+    if (i >= values.length) break;
+    let key = keys[i];
+    let value = values[i];
+
+    if (key == "serviceURL") {
+      offering.serviceURL = value.toString();
+    } else if (key == "minPieceSizeInBytes") {
+      offering.minPieceSize = bytesToBigInt(value);
+    } else if (key == "maxPieceSizeInBytes") {
+      offering.maxPieceSize = bytesToBigInt(value);
+    } else if (key == "storagePricePerTibPerDay") {
+      offering.pricePerTibDay = bytesToBigInt(value);
+    } else if (key == "minProvingPeriodInEpochs") {
+      offering.minProvingPeriod = bytesToBigInt(value);
+    } else if (key == "location") {
+      offering.location = value.toString();
+    } else if (key == "paymentTokenAddress") {
+      offering.paymentToken = value;
+    } else if (key == "ipniPiece") {
+      offering.ipniPiece = bytesToBoolean(value);
+    } else if (key == "ipniIpfs") {
+      offering.ipniIpfs = bytesToBoolean(value);
+    } else if (key == "IPNIPeerID") {
+      offering.ipniPeerId = value;
+    } else if (key == "serviceStatus" || key == "service_status") {
+      offering.serviceStatus = value.toString();
+    } else if (key == "capacityTib" || key == "capacity_tib") {
+      offering.capacityTib = value.toString();
+    }
+  }
+}
+
+export function createOffering(event: ProductAddedEvent): void {
+  const productType = event.params.productType;
+  if (productType != PDP_PRODUCT_TYPE) return;
+
+  const serviceProvider = event.params.serviceProvider;
+  const offeringId = serviceProvider.toHex() + "-" + productType.toString();
+  const offering = new PDPOffering(offeringId);
+
+  offering.productType = BigInt.fromI32(productType);
+  offering.ipniPiece = false;
+  offering.ipniIpfs = false;
+  offering.isActive = true;
+
+  decodeCapabilities(offering, event.params.capabilityKeys, event.params.capabilityValues);
+  offering.save();
+
+  const provider = Provider.load(serviceProvider);
+  if (provider) {
+    provider.pdpOffering = offering.id;
+    provider.save();
+  }
 }
