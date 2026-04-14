@@ -20,10 +20,10 @@ const CONTRACT_MAPPING: Record<string, string> = {
 
 const DEFAULT_START_BLOCKS: Record<string, Record<string, number>> = {
   mainnet: {
-    PDPVerifier: 1000000,
-    ServiceProviderRegistry: 1000000,
-    FilecoinWarmStorageService: 1000000,
-    USDFCToken: 1000000,
+    PDPVerifier: 5445000,
+    ServiceProviderRegistry: 5445000,
+    FilecoinWarmStorageService: 5445000,
+    USDFCToken: 5445000,
   },
   calibration: {
     PDPVerifier: 2988297,
