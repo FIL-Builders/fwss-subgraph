@@ -24,6 +24,7 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 synapse",
     "deploy-local:calibration": "pnpm run build:calibration && pnpm run deploy-local",
     "deploy-local:mainnet": "pnpm run build:mainnet && pnpm run deploy-local",
+    "test:scripts": "node --test tests/*.test.mjs",
     "test": "graph test"
   },
   "engines": {
