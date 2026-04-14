@@ -67,7 +67,8 @@ function saveAbi(contractName: string, abi: unknown[]): void {
     mkdirSync(abiDir, { recursive: true })
     writeFileSync(abiPath, JSON.stringify(abi, null, 2))
   } catch (error) {
-    console.warn(`Warning: Failed to save ABI for ${contractName}: ${(error as Error).message}`)
+    console.error(`Error: Failed to save ABI for ${contractName}: ${(error as Error).message}`)
+    process.exit(1)
   }
 }
 
