@@ -36,3 +36,9 @@ cache
 # Generated schema and subgraph.yaml
 schema.graphql
 subgraph.yaml
+
+# ABIs generated from @filoz/synapse-core at build time (legacy ABI is committed separately)
+abi/PDPVerifier.abi.json
+abi/FilecoinWarmStorageService.abi.json
+abi/ServiceProviderRegistry.abi.json
+abi/USDFCToken.abi.json
