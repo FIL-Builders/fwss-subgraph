@@ -6,7 +6,11 @@
     "precodegen": "pnpm generate:constants && pnpm generate:schema && pnpm generate:yaml",
     "codegen": "graph codegen",
     "generate:constants": "tsx ./scripts/generate-constants.ts",
+    "generate:constants:calibration": "tsx ./scripts/generate-constants.ts calibration",
+    "generate:constants:mainnet": "tsx ./scripts/generate-constants.ts mainnet",
     "generate:yaml": "tsx ./scripts/generate-config.ts --yaml",
+    "generate:yaml:calibration": "tsx ./scripts/generate-config.ts calibration --yaml",
+    "generate:yaml:mainnet": "tsx ./scripts/generate-config.ts mainnet --yaml",
     "generate:schema": "cp ./schemas/schema.${VERSION:-v1}.graphql schema.graphql",
     "prebuild": "pnpm codegen",
     "build": "graph build",
@@ -21,6 +25,9 @@
     "deploy-local:calibration": "pnpm run build:calibration && pnpm run deploy-local",
     "deploy-local:mainnet": "pnpm run build:mainnet && pnpm run deploy-local",
     "test": "graph test"
+  },
+  "engines": {
+    "node": ">=20.18.1"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.98.1",

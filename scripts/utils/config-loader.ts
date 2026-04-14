@@ -10,7 +10,7 @@ const NETWORK_NAMES: Record<string, string> = {
   calibration: 'filecoin-testnet',
 }
 
-// Maps our template contract names to @filoz/synapse-core contract keys
+// Maps @filoz/synapse-core contract keys to our template contract names
 const CONTRACT_MAPPING: Record<string, string> = {
   pdp: 'PDPVerifier',
   fwss: 'FilecoinWarmStorageService',
@@ -54,9 +54,16 @@ function loadStartBlockOverrides(network: string): Record<string, number> | null
   try {
     const content = readFileSync(overridesPath, 'utf8')
     const overrides = JSON.parse(content) as Record<string, Record<string, number>>
-    return overrides[network] || null
-  } catch {
-    return null
+    return overrides[network] ?? null
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null
+    }
+
+    console.error(
+      `Error: Failed to load start block overrides from ${overridesPath}: ${(error as Error).message}`,
+    )
+    process.exit(1)
   }
 }
 
@@ -78,7 +85,7 @@ export function loadNetworkConfig(network = 'calibration'): NetworkConfig {
     process.exit(1)
   }
 
-  console.log(`Loading contract addresses from @filoz/synapse-core for ${network}...`)
+  console.error(`Loading contract addresses from @filoz/synapse-core for ${network}...`)
 
   const contracts = getChainContracts(network)
   if (!contracts) {
@@ -100,7 +107,7 @@ export function loadNetworkConfig(network = 'calibration'): NetworkConfig {
       process.exit(1)
     }
 
-    const startBlock = startBlockOverrides?.[templateKey] || defaultStartBlocks[templateKey] || 0
+    const startBlock = startBlockOverrides?.[templateKey] ?? defaultStartBlocks[templateKey] ?? 0
 
     config[templateKey] = {
       address: contract.address,
@@ -110,6 +117,6 @@ export function loadNetworkConfig(network = 'calibration'): NetworkConfig {
     saveAbi(templateKey, contract.abi)
   }
 
-  console.log(`✅ Loaded contract addresses and ABIs from @filoz/synapse-core`)
+  console.error(`✅ Loaded contract addresses and ABIs from @filoz/synapse-core`)
   return config
 }
