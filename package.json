@@ -1,15 +1,16 @@
 {
   "name": "synapse",
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "precodegen": "pnpm generate:constants && pnpm generate:schema && pnpm generate:yaml",
     "codegen": "graph codegen",
-    "generate:constants": "node ./scripts/generate-constants.js",
-    "generate:constants:calibration": "node ./scripts/generate-constants.js calibration",
-    "generate:constants:mainnet": "node ./scripts/generate-constants.js mainnet",
-    "generate:yaml": "node ./scripts/generate-config.js --yaml",
-    "generate:yaml:calibration": "node ./scripts/generate-config.js calibration --yaml",
-    "generate:yaml:mainnet": "node ./scripts/generate-config.js mainnet --yaml",
+    "generate:constants": "tsx ./scripts/generate-constants.ts",
+    "generate:constants:calibration": "tsx ./scripts/generate-constants.ts calibration",
+    "generate:constants:mainnet": "tsx ./scripts/generate-constants.ts mainnet",
+    "generate:yaml": "tsx ./scripts/generate-config.ts --yaml",
+    "generate:yaml:calibration": "tsx ./scripts/generate-config.ts calibration --yaml",
+    "generate:yaml:mainnet": "tsx ./scripts/generate-config.ts mainnet --yaml",
     "generate:schema": "cp ./schemas/schema.${VERSION:-v1}.graphql schema.graphql",
     "prebuild": "pnpm codegen",
     "build": "graph build",
@@ -23,14 +24,23 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 synapse",
     "deploy-local:calibration": "pnpm run build:calibration && pnpm run deploy-local",
     "deploy-local:mainnet": "pnpm run build:mainnet && pnpm run deploy-local",
+    "test:scripts": "node --test tests/*.test.mjs",
     "test": "graph test"
   },
+  "engines": {
+    "node": ">=20.18.1"
+  },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.97.0",
+    "@graphprotocol/graph-cli": "0.98.1",
     "@graphprotocol/graph-ts": "0.37.0"
   },
   "devDependencies": {
+    "@filoz/synapse-core": "^0.4.0",
+    "@types/mustache": "^4.2.5",
+    "@types/node": "^22.0.0",
     "matchstick-as": "0.6.0",
-    "mustache": "^4.2.0"
+    "mustache": "^4.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
   }
 }
